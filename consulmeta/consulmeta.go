@@ -56,7 +56,7 @@ func (r *ConsulMetaAdapter) Ping() error {
 func (r *ConsulMetaAdapter) Register(service *bridge.Service) error {
 
 	registration := new(consulapi.AgentServiceRegistration)
-	registration.ID = service.ID
+	registration.ID = r.path[1:] + service.ID
 	registration.Name = service.Name
 	registration.Port = service.Port
 	registration.Tags = service.Tags
@@ -111,9 +111,34 @@ func (r *ConsulMetaAdapter) Deregister(service *bridge.Service) error {
 		log.Println("consulmeta: failed to delete k/v for ["+path+"]:", err)
 	}
 
-	return r.client.Agent().ServiceDeregister(service.ID)
+	return r.client.Agent().ServiceDeregister(r.path[1:] + service.ID)
 }
 
 func (r *ConsulMetaAdapter) Refresh(service *bridge.Service) error {
+	return nil
+}
+
+func (r *ConsulMetaAdapter) Cleanup(validServices map[string]*bridge.Service) error {
+	agentServices, err := r.client.Agent().Services()
+	if err != nil {
+		return err
+	}
+
+	for id, _ := range agentServices {
+		if !strings.HasPrefix(id, r.path[1:]) {
+			continue
+		}
+
+		idWithoutPrefix := strings.TrimPrefix(id, r.path[1:])
+
+		service, ok := validServices[idWithoutPrefix]
+		if !ok || service == nil {
+			log.Println("cleanup:", idWithoutPrefix)
+			if err := r.client.Agent().ServiceDeregister(id); err != nil {
+				log.Println("consul deregister during cleanup failed:", id, err)
+			}
+		}
+	}
+
 	return nil
 }
