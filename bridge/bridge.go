@@ -248,7 +248,7 @@ func (b *Bridge) newService(port ServicePort, isgroup bool) *Service {
 
 	delete(metadata, "id")
 	delete(metadata, "tags")
-	delete(metadata, "name")
+	metadata["container_name"] = container.Name[1:]
 	service.Attrs = metadata
 	service.TTL = b.config.RefreshTtl
 
