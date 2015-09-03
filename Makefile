@@ -3,10 +3,11 @@ VERSION=$(shell cat VERSION)
 DEV_RUN_OPTS ?= consul:
 
 dev:
+	CGO_ENABLED=0 go build -ldflags "-X main.Version=dev" -a -tags netgo -installsuffix netgo -installsuffix cgo -o ./build/registrator
 	docker build -f Dockerfile.dev -t $(NAME):dev .
 	docker run --rm \
 		-v /var/run/docker.sock:/tmp/docker.sock \
-		$(NAME):dev /bin/registrator $(DEV_RUN_OPTS)
+		$(NAME):dev $(DEV_RUN_OPTS)
 
 build:
 	mkdir -p build
