@@ -33,7 +33,7 @@ func combineTags(tagParts ...string) []string {
 func serviceMetaData(config *dockerapi.Config, port string) map[string]string {
 	meta := config.Env
 	for k, v := range config.Labels {
-		meta = append(meta, k + "=" + v)
+		meta = append(meta, k+"="+v)
 	}
 	metadata := make(map[string]string)
 	for _, kv := range meta {
@@ -46,10 +46,10 @@ func serviceMetaData(config *dockerapi.Config, port string) map[string]string {
 				if portkey[0] != port {
 					continue
 				}
-				metadata[portkey[1]] = kvp[1]
-			} else {
-				metadata[key] = kvp[1]
+				key = portkey[1]
 			}
+			metadata["original_port"] = port
+			metadata[key] = kvp[1]
 		}
 	}
 	return metadata
@@ -69,7 +69,7 @@ func servicePort(container *dockerapi.Container, port dockerapi.Port, published 
 	if len(exposedPort) == 2 {
 		ept = exposedPort[1]
 	} else {
-		ept = "tcp"  // default
+		ept = "tcp" // default
 	}
 	return ServicePort{
 		HostPort:          hp,
